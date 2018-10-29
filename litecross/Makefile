@@ -5,10 +5,10 @@ BINUTILS_SRCDIR = BINUTILS_SRCDIR_not_set
 GCC_SRCDIR = GCC_SRCDIR_not_set
 MUSL_SRCDIR = MUSL_SRCDIR_not_set
 
-GCC_CONFIG_FOR_TARGET = 
-COMMON_CONFIG = 
-GCC_CONFIG = 
-TOOLCHAIN_CONFIG = 
+GCC_CONFIG_FOR_TARGET =
+COMMON_CONFIG =
+GCC_CONFIG =
+TOOLCHAIN_CONFIG =
 
 XGCC_DIR = ../obj_gcc/gcc
 XGCC = $(XGCC_DIR)/xgcc -B $(XGCC_DIR)
@@ -110,9 +110,9 @@ FULL_GCC_CONFIG += --with-build-sysroot=$(CURDIR)/obj_sysroot \
 	READELF_FOR_TARGET=$(PWD)/obj_binutils/binutils/readelf \
 	STRIP_FOR_TARGET=$(PWD)/obj_binutils/binutils/strip-new \
 	# end
-FULL_MUSL_CONFIG += CC="$(XGCC)" LIBCC="../obj_gcc/$(TARGET)/libgcc/libgcc.a" 
+FULL_MUSL_CONFIG += CC="$(XGCC)" LIBCC="../obj_gcc/$(TARGET)/libgcc/libgcc.a"
 MUSL_VARS = AR=../obj_binutils/binutils/ar RANLIB=../obj_binutils/binutils/ranlib
-obj_musl/.lc_configured: | obj_gcc/gcc/.lc_built
+obj_musl/.lc_configured: | obj_binutils/.lc_plugin obj_gcc/gcc/.lc_built
 obj_musl/.lc_built: | obj_gcc/$(TARGET)/libgcc/libgcc.a
 obj_gcc/gcc/.lc_built: | obj_sysroot/usr obj_sysroot/lib32 obj_sysroot/lib64 obj_sysroot/include
 obj_gcc/.lc_built: | obj_sysroot/.lc_libs obj_sysroot/.lc_headers
@@ -121,7 +121,7 @@ else
 SYSROOT = /
 FULL_BINUTILS_CONFIG += --host=$(HOST)
 FULL_GCC_CONFIG += --host=$(HOST)
-MUSL_VARS = 
+MUSL_VARS =
 endif
 
 ifeq ($(TARGET),)
@@ -234,6 +234,11 @@ obj_gcc/.lc_mpc_built: | obj_gcc/.lc_mpfr_built
 
 obj_gcc/gcc/.lc_built: | obj_gcc/.lc_mpc_built
 	cd obj_gcc && $(MAKE) MAKE="$(MAKE) $(LIBTOOL_ARG)" all-gcc
+	touch $@
+
+obj_binutils/.lc_plugin: | obj_gcc/gcc/.lc_built
+	mkdir -p obj_binutils/bin obj_binutils/lib/bfd-plugins
+	ln -fns ../../../obj_gcc/gcc/liblto_plugin.so obj_binutils/lib/bfd-plugins
 	touch $@
 
 obj_musl/.lc_configured: | obj_musl src_musl
